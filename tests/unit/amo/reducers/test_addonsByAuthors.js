@@ -203,6 +203,32 @@ describe(__filename, () => {
       expect(newState.byAddonSlug)
         .toEqual({ [fakeAddon.slug]: [fakeAddon.id] });
     });
+
+    it('does not reset the byUsername dictionary when adding add-ons', () => {
+      // See fakeAddons() output, above.
+      const firstAuthorId = 51;
+      const secondAuthorId = 61;
+      const thirdAuthorId = 71;
+      const addons = fakeAddons();
+
+      const firstParams = getParams({
+        addons: [addons.firstAddon, addons.secondAddon],
+        forAddonSlug: undefined,
+      });
+      let state = reducer(undefined, loadAddonsByAuthors(firstParams));
+
+      const secondParams = getParams({
+        addons: [addons.thirdAddon],
+        forAddonSlug: undefined,
+      });
+      state = reducer(state, loadAddonsByAuthors(secondParams));
+
+      expect(state.byUserId).toEqual({
+        [firstAuthorId]: [addons.firstAddon.id],
+        [secondAuthorId]: [addons.firstAddon.id, addons.secondAddon.id],
+        [thirdAuthorId]: [addons.thirdAddon.id],
+      });
+    });
   });
 
   describe('getAddonsForSlug', () => {
