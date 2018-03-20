@@ -97,7 +97,7 @@ describe(__filename, () => {
       expect(state.byAddonSlug).toEqual({ 'addon-slug': [fakeAddon.id] });
     });
 
-    it('resets the loaded add-ons', () => {
+    it('resets the loaded add-ons for the slug', () => {
       const forAddonSlug = 'addon-slug';
 
       const previousState = reducer(undefined, loadAddonsByAuthors({
@@ -115,7 +115,9 @@ describe(__filename, () => {
       }));
 
       expect(state.byAddonSlug).toMatchObject({ 'addon-slug': undefined });
-      expect(state.byUsername).toMatchObject({ author1: undefined });
+      // It should keep the add-ons by username so they can be added to
+      // as is done on the UserProfile page.
+      expect(state.byUsername).toMatchObject(previousState.byUsername);
     });
   });
 
