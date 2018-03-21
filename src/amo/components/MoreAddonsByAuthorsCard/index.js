@@ -38,7 +38,7 @@ type Props = {|
   numberOfAddons?: number,
 |};
 
-export class MoreAddonsByAuthorsCard extends React.Component<Props> {
+export class MoreAddonsByAuthorsCardBase extends React.Component<Props> {
   componentWillMount() {
     const { addons, addonType, authorNames } = this.props;
 
@@ -173,4 +173,4 @@ export default compose(
   translate(),
   connect(mapStateToProps),
   withErrorHandler({ name: 'MoreAddonsByAuthorsCard' }),
-)(MoreAddonsByAuthorsCard);
+)(MoreAddonsByAuthorsCardBase);
