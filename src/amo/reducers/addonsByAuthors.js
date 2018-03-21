@@ -99,6 +99,37 @@ export const getAddonsForSlug = (
   }) : null;
 };
 
+export const getAddonsForUsernames = (
+  state: AddonsByAuthors,
+  usernames: Array<string>,
+) => {
+  invariant(usernames && usernames.length, 'At least one username is required');
+
+  const ids = usernames.map((username) => {
+    return state.byUsername[username];
+  }).reduce((array, addonIds) => {
+    console.log('STAR TREK', array, addonIds);
+    if (!addonIds) {
+      return array;
+    }
+
+    for (const addonId of addonIds) {
+      if (!array.includes(addonId)) {
+        array.push(addonId);
+      }
+    }
+
+    return array;
+  }, []);
+
+  return ids ? (ids
+    .map((id) => {
+      console.log('DARTH JS', state.byAddonId[id]);
+      return state.byAddonId[id];
+    })
+  ) : [];
+};
+
 type Action =
   | FetchAddonsByAuthorsAction
   | LoadAddonsByAuthorsAction;

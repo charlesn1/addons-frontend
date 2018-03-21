@@ -1,4 +1,4 @@
-import { call, put, select, takeLatest } from 'redux-saga/effects';
+import { call, put, select, takeEvery } from 'redux-saga/effects';
 import { SEARCH_SORT_TRENDING } from 'core/constants';
 import {
   FETCH_ADDONS_BY_AUTHORS,
@@ -42,5 +42,5 @@ export function* fetchAddonsByAuthors({ payload }) {
 }
 
 export default function* addonsByAuthorsSaga() {
-  yield takeLatest(FETCH_ADDONS_BY_AUTHORS, fetchAddonsByAuthors);
+  yield takeEvery(FETCH_ADDONS_BY_AUTHORS, fetchAddonsByAuthors);
 }

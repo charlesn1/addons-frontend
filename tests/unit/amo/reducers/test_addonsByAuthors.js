@@ -3,6 +3,7 @@ import reducer, {
   ADDONS_BY_AUTHORS_PAGE_SIZE,
   fetchAddonsByAuthors,
   getAddonsForSlug,
+  getAddonsForUsernames,
   initialState,
   loadAddonsByAuthors,
 } from 'amo/reducers/addonsByAuthors';
@@ -254,6 +255,53 @@ describe(__filename, () => {
       }));
 
       expect(getAddonsForSlug(state, 'not-a-slug')).toBeNull();
+    });
+  });
+
+  describe('getAddonsForUsernames', () => {
+    it('returns addons for a single author', () => {
+      const addons = fakeAddons();
+      const state = reducer(undefined, loadAddonsByAuthors({
+        addons: Object.values(addons),
+      }));
+
+      expect(getAddonsForUsernames(state, ['test2'])).toEqual([
+        createInternalAddon(addons.firstAddon),
+        createInternalAddon(addons.secondAddon),
+      ]);
+    });
+
+    it('returns addons for multiple authors of different add-ons', () => {
+      const addons = fakeAddons();
+      const state = reducer(undefined, loadAddonsByAuthors({
+        addons: Object.values(addons),
+      }));
+
+      expect(getAddonsForUsernames(state, ['test', 'test3'])).toEqual([
+        createInternalAddon(addons.firstAddon),
+        createInternalAddon(addons.thirdAddon),
+      ]);
+    });
+
+    it('returns addons for multiple authors that share add-ons', () => {
+      const addons = fakeAddons();
+      const state = reducer(undefined, loadAddonsByAuthors({
+        addons: Object.values(addons),
+      }));
+
+      expect(getAddonsForUsernames(state, ['test', 'test2'])).toEqual([
+        createInternalAddon(addons.firstAddon),
+        createInternalAddon(addons.secondAddon),
+      ]);
+    });
+
+    it('returns nothing if no add-ons are found', () => {
+      const addons = fakeAddons();
+      const state = reducer(undefined, loadAddonsByAuthors({
+        addons: Object.values(addons),
+      }));
+
+      expect(getAddonsForUsernames(state, ['nobody'])).toEqual([]);
     });
   });
 });

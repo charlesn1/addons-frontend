@@ -1,3 +1,4 @@
+import deepEqual from 'deep-eql';
 import SagaTester from 'redux-saga-tester';
 
 import addonsByAuthorsReducer, {
@@ -7,6 +8,7 @@ import addonsByAuthorsReducer, {
 } from 'amo/reducers/addonsByAuthors';
 import addonsByAuthorsSaga from 'amo/sagas/addonsByAuthors';
 import {
+  ADDON_TYPE_EXTENSION,
   ADDON_TYPE_THEME,
   SEARCH_SORT_TRENDING,
 } from 'core/constants';
@@ -47,8 +49,82 @@ describe(__filename, () => {
   }
 
   it('calls the API to retrieve other add-ons', async () => {
-    const addons = [fakeAddon];
+    const fakeAddons = [{ ...fakeAddon, id: 54, slug: 'fifty-four' }];
+    const fakeThemes = [
+      { ...fakeAddon, id: 55, slug: 'fifty-five', type: ADDON_TYPE_THEME },
+    ];
     const authors = ['mozilla', 'johnedoe'];
+    const state = sagaTester.getState();
+
+    mockApi
+      .expects('search')
+      .withArgs({
+        api: state.api,
+        filters: {
+          addonType: ADDON_TYPE_THEME,
+          author: authors.join(','),
+          exclude_addons: undefined, // `callApi` will internally unset this
+          page_size: ADDONS_BY_AUTHORS_PAGE_SIZE,
+          sort: SEARCH_SORT_TRENDING,
+        },
+      })
+      .once()
+      .returns(Promise.resolve(createAddonsApiResult(fakeThemes)));
+
+    mockApi
+      .expects('search')
+      .withArgs({
+        api: state.api,
+        filters: {
+          addonType: ADDON_TYPE_EXTENSION,
+          author: authors.join(','),
+          exclude_addons: undefined, // `callApi` will internally unset this
+          page_size: ADDONS_BY_AUTHORS_PAGE_SIZE,
+          sort: SEARCH_SORT_TRENDING,
+        },
+      })
+      .once()
+      .returns(Promise.resolve(createAddonsApiResult(fakeAddons)));
+
+    _fetchAddonsByAuthors({ addonType: ADDON_TYPE_THEME, authors });
+    _fetchAddonsByAuthors({ addonType: ADDON_TYPE_EXTENSION, authors });
+
+    const loadActionForAddons = loadAddonsByAuthors({
+      addons: fakeAddons,
+      forAddonSlug: undefined,
+    });
+    const loadActionForThemes = loadAddonsByAuthors({
+      addons: fakeThemes,
+      forAddonSlug: undefined,
+    });
+
+    /*
+    const expectedLoadActionForAddons = await sagaTester
+      .waitFor(loadActionForAddons.type);
+    const expectedLoadActionForThemes = await sagaTester
+      .waitFor(loadActionForThemes.type);
+    */
+    await sagaTester.waitFor(loadActionForAddons.type);
+    mockApi.verify();
+
+    let matchingActions = 0;
+    sagaTester.getCalledActions().filter((action) => {
+      return action.type === loadActionForAddons.type;
+    }).forEach((action) => {
+      if (
+        deepEqual(action, loadActionForAddons) ||
+        deepEqual(action, loadActionForThemes)
+      ) {
+        matchingActions++;
+      }
+    });
+
+    expect(matchingActions).toEqual(2);
+  });
+
+  it('calls the API multiple times for different addonType', async () => {
+    const addons = [fakeAddon];
+    const authors = ['mozilla'];
     const state = sagaTester.getState();
 
     mockApi
