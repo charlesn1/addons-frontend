@@ -98,7 +98,7 @@ export const joinAuthorNames = (authorNames, addonType) => {
   return authorNames.sort().join('-') + (addonType ? `-${addonType}` : '');
 };
 
-export const getLoadingForAuthorNames = (state, authorNames, addonType = '') => {
+export const getLoadingForAuthorNames = (state, authorNames, addonType) => {
   return authorNames && authorNames.length ?
     (state.loadingFor[joinAuthorNames(authorNames, addonType)] || null) : null;
 };
@@ -140,7 +140,7 @@ export const getAddonsForUsernames = (
     .map((id) => {
       return state.byAddonId[id];
     })
-  ) : [];
+  ) : null;
 };
 
 type Action =

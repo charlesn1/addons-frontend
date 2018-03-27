@@ -9,6 +9,7 @@ import AddonsCard from 'amo/components/AddonsCard';
 import {
   fetchAddonsByAuthors,
   getAddonsForUsernames,
+  getLoadingForAuthorNames,
 } from 'amo/reducers/addonsByAuthors';
 import {
   ADDON_TYPE_DICT,
@@ -31,10 +32,11 @@ const DEFAULT_ADDON_MAX = 3;
 type Props = {|
   addons?: Array<AddonType>,
   addonType?: string,
-  authorNames?: Array<string>,
+  authorNames: Array<string>,
   dispatch: DispatchFunc,
   errorHandler: ErrorHandlerType,
   i18n: I18nType,
+  loading: boolean,
   numberOfAddons?: number,
 |};
 
@@ -67,11 +69,7 @@ export class MoreAddonsByAuthorsCardBase extends React.Component<Props> {
     }
   }
 
-  dispatchFetchAddonsByAuthors({ addonType, authorNames } = {}) {
-    if (!authorNames || !authorNames.length) {
-      return;
-    }
-
+  dispatchFetchAddonsByAuthors({ addonType, authorNames }) {
     this.props.dispatch(fetchAddonsByAuthors({
       addonType,
       authors: authorNames,
@@ -80,9 +78,16 @@ export class MoreAddonsByAuthorsCardBase extends React.Component<Props> {
   }
 
   render() {
-    const { addons, addonType, authorNames, i18n, ...cardProps } = this.props;
+    const {
+      addons,
+      addonType,
+      authorNames,
+      i18n,
+      loading,
+      ...cardProps
+    } = this.props;
 
-    if (!addons || addons.length === 0) {
+    if (!loading && (!addons || !addons.length)) {
       return null;
     }
 
@@ -148,6 +153,7 @@ export class MoreAddonsByAuthorsCardBase extends React.Component<Props> {
         addons={addons}
         className={classnames}
         header={header}
+        loading={loading}
         {...cardProps}
       />
     );
@@ -157,16 +163,14 @@ export class MoreAddonsByAuthorsCardBase extends React.Component<Props> {
 export const mapStateToProps = (state: Object, ownProps: Props) => {
   const { addonType, authorNames, numberOfAddons } = ownProps;
 
-  let addons;
-  if (addonType && authorNames && authorNames.length) {
-    addons = getAddonsForUsernames(state.addonsByAuthors, authorNames)
-      .filter((addon) => {
-        return addon.type === addonType;
-      })
-      .slice(0, numberOfAddons || DEFAULT_ADDON_MAX);
-  }
+  let addons = getAddonsForUsernames(
+    state.addonsByAuthors, authorNames, addonType);
+  addons = addons ?
+    addons.slice(0, numberOfAddons || DEFAULT_ADDON_MAX) : addons;
+  const loading = getLoadingForAuthorNames(
+    state.addonsByAuthors, authorNames, addonType);
 
-  return { addons };
+  return { addons, loading };
 };
 
 export default compose(

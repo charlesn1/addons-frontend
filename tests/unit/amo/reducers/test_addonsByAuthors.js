@@ -372,7 +372,7 @@ describe(__filename, () => {
         authors: ['fakeUsername'],
       }));
 
-      expect(getAddonsForUsernames(state, ['nobody'])).toEqual([]);
+      expect(getAddonsForUsernames(state, ['nobody'])).toBeNull();
     });
   });
 

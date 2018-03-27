@@ -143,6 +143,7 @@ describe(__filename, () => {
   const _loadAddonsByAuthors = ({ addon, addonsByAuthors }) => {
     return loadAddonsByAuthors({
       addons: addonsByAuthors,
+      authors: ['foo'],
       forAddonSlug: addon.slug,
     });
   };
