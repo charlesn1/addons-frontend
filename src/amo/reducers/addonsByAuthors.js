@@ -18,6 +18,8 @@ export type AddonsByAuthors = {|
   byAddonSlug: { [string]: Array<number> },
   byUserId: { [number]: Array<number> },
   byUsername: { [string]: Array<number> },
+  forAuthorNamesAndAddonType: { [string]: Array<number> | null },
+  loadingFor: { [string]: boolean },
 |};
 
 export const initialState: AddonsByAuthors = {
@@ -25,6 +27,8 @@ export const initialState: AddonsByAuthors = {
   byAddonSlug: {},
   byUserId: {},
   byUsername: {},
+  forAuthorNamesAndAddonType: {},
+  loadingFor: {},
 };
 
 export const ADDONS_BY_AUTHORS_PAGE_SIZE = 6;
@@ -52,7 +56,6 @@ export const fetchAddonsByAuthors = (
   { addonType, authors, errorHandlerId, forAddonSlug }: FetchAddonsByAuthorsParams
 ): FetchAddonsByAuthorsAction => {
   invariant(errorHandlerId, 'An errorHandlerId is required');
-  // invariant(addonType, 'An add-on type is required.');
   invariant(authors, 'Authors are required.');
   invariant(Array.isArray(authors), 'The authors parameter must be an array.');
 
@@ -69,6 +72,8 @@ export const fetchAddonsByAuthors = (
 
 type LoadAddonsByAuthorsParams = {|
   addons: Array<ExternalAddonType>,
+  addonType?: string,
+  authors: Array<string>,
   forAddonSlug?: string,
 |};
 
@@ -78,14 +83,24 @@ type LoadAddonsByAuthorsAction = {|
 |};
 
 export const loadAddonsByAuthors = (
-  { addons, forAddonSlug }: LoadAddonsByAuthorsParams
+  { addons, addonType, authors, forAddonSlug }: LoadAddonsByAuthorsParams
 ): LoadAddonsByAuthorsAction => {
   invariant(addons, 'A set of add-ons is required.');
+  invariant(authors, 'A list of authors is required.');
 
   return {
     type: LOAD_ADDONS_BY_AUTHORS,
-    payload: { addons, forAddonSlug },
+    payload: { addons, addonType, authors, forAddonSlug },
   };
+};
+
+export const joinAuthorNames = (authorNames, addonType) => {
+  return authorNames.sort().join('-') + (addonType ? `-${addonType}` : '');
+};
+
+export const getLoadingForAuthorNames = (state, authorNames, addonType = '') => {
+  return authorNames && authorNames.length ?
+    (state.loadingFor[joinAuthorNames(authorNames, addonType)] || null) : null;
 };
 
 export const getAddonsForSlug = (
@@ -108,9 +123,8 @@ export const getAddonsForUsernames = (
   const ids = usernames.map((username) => {
     return state.byUsername[username];
   }).reduce((array, addonIds) => {
-    console.log('STAR TREK', array, addonIds);
     if (!addonIds) {
-      return array;
+      return null;
     }
 
     for (const addonId of addonIds) {
@@ -124,7 +138,6 @@ export const getAddonsForUsernames = (
 
   return ids ? (ids
     .map((id) => {
-      console.log('DARTH JS', state.byAddonId[id]);
       return state.byAddonId[id];
     })
   ) : [];
@@ -149,6 +162,11 @@ const reducer = (
         };
       }
 
+      newState.loadingFor[joinAuthorNames(
+        action.payload.authors, action.payload.addonType)] = true;
+      newState.forAuthorNamesAndAddonType[joinAuthorNames(
+        action.payload.authors, action.payload.addonType)] = null;
+
       return newState;
     }
     case LOAD_ADDONS_BY_AUTHORS: {
@@ -162,11 +180,19 @@ const reducer = (
         };
       }
 
-      const addons = action.payload.addons
+      let addons = action.payload.addons
         .map((addon) => createInternalAddon(addon));
+
+      const authorNamesWithAddonType = joinAuthorNames(
+        action.payload.authors, action.payload.addonType);
+
+      newState.forAuthorNamesAndAddonType[authorNamesWithAddonType] = [];
+      newState.loadingFor[authorNamesWithAddonType] = false;
 
       for (const addon of addons) {
         newState.byAddonId[addon.id] = addon;
+        newState.forAuthorNamesAndAddonType[authorNamesWithAddonType]
+          .push(addon.id);
 
         if (addon.authors) {
           for (const author of addon.authors) {

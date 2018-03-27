@@ -23,7 +23,7 @@ export function* fetchAddonsByAuthors({ payload }) {
       api: state.api,
       filters: {
         addonType,
-        author: authors.join(','),
+        author: authors.sort().join(','),
         exclude_addons: forAddonSlug,
         page_size: ADDONS_BY_AUTHORS_PAGE_SIZE,
         sort: SEARCH_SORT_TRENDING,
@@ -34,7 +34,12 @@ export function* fetchAddonsByAuthors({ payload }) {
     // https://github.com/mozilla/addons-frontend/issues/2917 is done.
     const addons = Object.values(response.entities.addons || {});
 
-    yield put(loadAddonsByAuthors({ addons, forAddonSlug }));
+    yield put(loadAddonsByAuthors({
+      addons,
+      addonType,
+      authors,
+      forAddonSlug,
+    }));
   } catch (error) {
     log.warn(`Search for addons by authors results failed to load: ${error}`);
     yield put(errorHandler.createErrorAction(error));
