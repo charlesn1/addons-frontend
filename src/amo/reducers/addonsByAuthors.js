@@ -4,7 +4,7 @@ import invariant from 'invariant';
 
 import { createInternalAddon } from 'core/reducers/addons';
 import type {
-  SearchResultAddonType, ExternalAddonType,
+  AddonType, ExternalAddonType,
 } from 'core/types/addons';
 
 
@@ -14,7 +14,7 @@ export type AddonsByAuthors = {|
   // That said, these are partial add-ons returned from the search
   // results and fetching all add-on data for each add-on might be too
   // expensive.
-  byAddonId: { [number]: Array<SearchResultAddonType> },
+  byAddonId: { [number]: AddonType },
   byAddonSlug: { [string]: Array<number> },
   byUserId: { [number]: Array<number> },
   byUsername: { [string]: Array<number> },
@@ -94,11 +94,15 @@ export const loadAddonsByAuthors = (
   };
 };
 
-export const joinAuthorNames = (authorNames, addonType) => {
+export const joinAuthorNames = (
+  authorNames: Array<string>, addonType?: string
+) => {
   return authorNames.sort().join('-') + (addonType ? `-${addonType}` : '');
 };
 
-export const getLoadingForAuthorNames = (state, authorNames, addonType) => {
+export const getLoadingForAuthorNames = (
+  state: AddonsByAuthors, authorNames: Array<string>, addonType?: string
+) => {
   return authorNames && authorNames.length ?
     (state.loadingFor[joinAuthorNames(authorNames, addonType)] || null) : null;
 };
@@ -117,13 +121,14 @@ export const getAddonsForSlug = (
 export const getAddonsForUsernames = (
   state: AddonsByAuthors,
   usernames: Array<string>,
+  addonType?: string,
 ) => {
   invariant(usernames && usernames.length, 'At least one username is required');
 
   const ids = usernames.map((username) => {
     return state.byUsername[username];
   }).reduce((array, addonIds) => {
-    if (!addonIds) {
+    if (!addonIds || !array) {
       return null;
     }
 
@@ -139,6 +144,9 @@ export const getAddonsForUsernames = (
   return ids ? (ids
     .map((id) => {
       return state.byAddonId[id];
+    })
+    .filter((addon) => {
+      return addonType ? addon.type === addonType : true;
     })
   ) : null;
 };
@@ -180,7 +188,7 @@ const reducer = (
         };
       }
 
-      let addons = action.payload.addons
+      const addons = action.payload.addons
         .map((addon) => createInternalAddon(addon));
 
       const authorNamesWithAddonType = joinAuthorNames(

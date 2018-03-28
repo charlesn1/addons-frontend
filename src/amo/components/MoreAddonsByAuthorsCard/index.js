@@ -19,6 +19,7 @@ import {
 } from 'core/constants';
 import { withErrorHandler } from 'core/errorHandler';
 import translate from 'core/i18n/translate';
+import type { AddonsByAuthors } from 'amo/reducers/addonsByAuthors';
 import type { ErrorHandlerType } from 'core/errorHandler';
 import type { AddonType } from 'core/types/addons';
 import type { I18nType } from 'core/types/i18n';
@@ -30,13 +31,13 @@ import './styles.scss';
 const DEFAULT_ADDON_MAX = 3;
 
 type Props = {|
-  addons?: Array<AddonType>,
+  addons?: Array<AddonType> | null,
   addonType?: string,
   authorNames: Array<string>,
   dispatch: DispatchFunc,
   errorHandler: ErrorHandlerType,
   i18n: I18nType,
-  loading: boolean,
+  loading?: boolean,
   numberOfAddons?: number,
 |};
 
@@ -52,7 +53,7 @@ export class MoreAddonsByAuthorsCardBase extends React.Component<Props> {
   componentWillReceiveProps({
     addonType: newAddonType,
     authorNames: newAuthorNames,
-  }) {
+  }: Props) {
     const {
       addonType: oldAddonType,
       authorNames: oldAuthorNames,
@@ -69,7 +70,7 @@ export class MoreAddonsByAuthorsCardBase extends React.Component<Props> {
     }
   }
 
-  dispatchFetchAddonsByAuthors({ addonType, authorNames }) {
+  dispatchFetchAddonsByAuthors({ addonType, authorNames }: any) {
     this.props.dispatch(fetchAddonsByAuthors({
       addonType,
       authors: authorNames,
@@ -84,7 +85,7 @@ export class MoreAddonsByAuthorsCardBase extends React.Component<Props> {
       authorNames,
       i18n,
       loading,
-      ...cardProps
+      numberOfAddons,
     } = this.props;
 
     if (!loading && (!addons || !addons.length)) {
@@ -154,13 +155,15 @@ export class MoreAddonsByAuthorsCardBase extends React.Component<Props> {
         className={classnames}
         header={header}
         loading={loading}
-        {...cardProps}
+        placeholderCount={numberOfAddons}
       />
     );
   }
 }
 
-export const mapStateToProps = (state: Object, ownProps: Props) => {
+export const mapStateToProps = (
+  state: {| addonsByAuthors: AddonsByAuthors |}, ownProps: Props
+) => {
   const { addonType, authorNames, numberOfAddons } = ownProps;
 
   let addons = getAddonsForUsernames(

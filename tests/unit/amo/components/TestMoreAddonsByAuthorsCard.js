@@ -415,7 +415,7 @@ describe(__filename, () => {
     const { store } = dispatchClientMetadata();
     const errorHandler = createStubErrorHandler();
     store.dispatch(addonsWithAuthorsOfType({
-      addonType: ADDON_TYPE_EXTENSION,
+      addonType: ADDON_TYPE_OPENSEARCH,
       multipleAuthors: true,
     }));
 
